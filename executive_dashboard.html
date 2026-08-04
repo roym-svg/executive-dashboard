@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executive Payroll Dashboard · Phase 2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Hebrew:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #0a0d13;
+        --surface-1: #12151f;
+        --surface-2: #181c28;
+        --border: #232839;
+        --accent: #5eead4;
+        --accent-2: #8b5cf6;
+        --green: #22c55e;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+        --text-primary: #e6e8ee;
+        --text-muted: #8b93a7;
+    }
+    * { box-sizing: border-box; }
+    body {
+        background: var(--bg);
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(139, 92, 246, 0.12), transparent),
+            radial-gradient(ellipse 60% 40% at 90% 10%, rgba(94, 234, 212, 0.06), transparent);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        min-height: 100vh;
+    }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    [dir="rtl"] { font-family: 'Noto Sans Hebrew', 'Inter', sans-serif; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    .card {
+        background: linear-gradient(180deg, var(--surface-1), var(--surface-1) 60%, var(--surface-2));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+    }
+    .kpi-card { transition: border-color 0.2s ease, transform 0.2s ease; }
+    .kpi-card:hover { border-color: rgba(94, 234, 212, 0.35); transform: translateY(-2px); }
+    .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+    .live-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent);
+        background: rgba(94, 234, 212, 0.08); border: 1px solid rgba(94, 234, 212, 0.25);
+        padding: 4px 10px; border-radius: 999px;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+    .tick-pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; min-width: 22px; text-align: center; padding: 2px 6px; border-radius: 6px; }
+    .tick-green { background: rgba(34,197,94,0.12); color: var(--green); }
+    .tick-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
+    .tick-red { background: rgba(239,68,68,0.12); color: var(--red); }
+
+    .tier-badge { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .tier-high { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .tier-balanced { background: rgba(94,234,212,0.10); color: var(--accent); border: 1px solid rgba(94,234,212,0.25); }
+    .tier-risk { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+    .tier-none { background: rgba(139,147,167,0.10); color: var(--text-muted); border: 1px solid rgba(139,147,167,0.2); }
+</style>
+</head>
+<body class="antialiased">
+
+<div class="max-w-[1400px] mx-auto px-6 md:px-10 py-10">
+
+    <!-- Header -->
+    <header class="flex flex-wrap items-start justify-between gap-4 mb-10">
+        <div>
+            <div class="eyebrow mb-2">EXECUTIVE PAYROLL & OPERATIONS DASHBOARD</div>
+            <h1 class="font-display text-3xl md:text-4xl font-semibold tracking-tight text-white">Instructor Compensation & Task Analytics</h1>
+            <p class="text-slate-500 text-sm mt-2">Generated 2026-08-04 10:44 · Source: <span class="font-mono text-slate-400">Phase2_Final_Salaries.xlsx</span></p>
+        </div>
+        <span class="live-badge"><span class="live-dot"></span>READ-ONLY AUTOMATION</span>
+    </header>
+
+    <!-- KPI Row -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="card kpi-card p-5">
+            <div class="eyebrow mb-3">Total Payroll</div>
+            <div class="font-mono text-3xl font-semibold text-white tabular-nums" dir="ltr">₪58,878</div>
+            <div class="text-xs text-slate-500 mt-2">22 active instructors</div>
+        </div>
+        <div class="card kpi-card p-5">
+            <div class="eyebrow mb-3">Avg Pay / Instructor</div>
+            <div class="font-mono text-3xl font-semibold text-white tabular-nums" dir="ltr">₪2,676</div>
+            <div class="text-xs text-slate-500 mt-2">Base ₪2,502 avg</div>
+        </div>
+        <div class="card kpi-card p-5">
+            <div class="eyebrow mb-3">Total Distance Bonus</div>
+            <div class="font-mono text-3xl font-semibold text-emerald-400 tabular-nums" dir="ltr">₪4,188</div>
+            <div class="text-xs text-slate-500 mt-2">7.6% of base pay</div>
+        </div>
+        <div class="card kpi-card p-5">
+            <div class="eyebrow mb-3">Tableau Bonus Pool</div>
+            <div class="font-mono text-3xl font-semibold" style="color:var(--accent)" dir="ltr">₪3,970</div>
+            <div class="text-xs text-slate-500 mt-2">7.2% of base pay</div>
+        </div>
+    </section>
+
+    <!-- Task Types & Logistics ROI Section -->
+    <section class="card p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-display text-base font-semibold text-white">Task Type Cost & Logistics ROI</h3>
+                <p class="text-xs text-slate-500 mt-0.5">עלות ממוצעת למשימה וניתוח השקעה בלוגיסטיקה ומרחקים</p>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400">
+                ממוצע מרחק למשימה: <span class="text-white font-semibold">30.7 ק"מ</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+        <div class="bg-white/[0.02] border border-white/5 rounded-xl p-4">
+            <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                <span>IL - Disconnect from the service</span>
+                <span class="font-mono text-slate-500">45 משימות</span>
+            </div>
+            <div class="font-mono text-xl font-semibold text-white mb-1" dir="ltr">₪69 <span class="text-xs text-slate-500 font-normal">ממוצע למשימה</span></div>
+            <div class="text-[11px] text-slate-500">סה"כ השקעה: ₪3,088</div>
+        </div>
+        
+        <div class="bg-white/[0.02] border border-white/5 rounded-xl p-4">
+            <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                <span>Internal - New User</span>
+                <span class="font-mono text-slate-500">320 משימות</span>
+            </div>
+            <div class="font-mono text-xl font-semibold text-white mb-1" dir="ltr">₪146 <span class="text-xs text-slate-500 font-normal">ממוצע למשימה</span></div>
+            <div class="text-[11px] text-slate-500">סה"כ השקעה: ₪46,850</div>
+        </div>
+        
+        <div class="bg-white/[0.02] border border-white/5 rounded-xl p-4">
+            <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                <span>Internal - Uniper Employee Support Request</span>
+                <span class="font-mono text-slate-500">44 משימות</span>
+            </div>
+            <div class="font-mono text-xl font-semibold text-white mb-1" dir="ltr">₪90 <span class="text-xs text-slate-500 font-normal">ממוצע למשימה</span></div>
+            <div class="text-[11px] text-slate-500">סה"כ השקעה: ₪3,950</div>
+        </div>
+        
+        </div>
+    </section>
+
+    <!-- Charts row -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="card p-5 lg:col-span-1">
+            <h3 class="font-display text-sm font-semibold text-white mb-1">Category Volume Distribution</h3>
+            <p class="text-xs text-slate-500 mb-4">242 total usage ticks</p>
+            <div class="relative h-52"><canvas id="categoryDonut"></canvas></div>
+        </div>
+        <div class="card p-5 lg:col-span-1">
+            <h3 class="font-display text-sm font-semibold text-white mb-1">Engagement Tiers</h3>
+            <p class="text-xs text-slate-500 mb-4">Dominant usage categories</p>
+            <div class="relative h-52"><canvas id="engagementChart"></canvas></div>
+        </div>
+        <div class="card p-5 lg:col-span-1">
+            <h3 class="font-display text-sm font-semibold text-white mb-1">Bonus-to-Base Ratio</h3>
+            <p class="text-xs text-slate-500 mb-4">% of base pay per instructor</p>
+            <div class="relative h-52"><canvas id="ratioChart"></canvas></div>
+        </div>
+    </section>
+
+    <!-- Instructor table -->
+    <section class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display text-sm font-semibold text-white">Instructor Breakdown</h3>
+            <span class="text-xs text-slate-500 font-mono">sorted by Final Pay ↓</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="eyebrow text-left border-b border-white/10">
+                        <th class="py-2 pr-4 font-medium">Instructor</th>
+                        <th class="py-2 px-4 font-medium">Email</th>
+                        <th class="py-2 px-4 font-medium text-right">Base Pay</th>
+                        <th class="py-2 px-4 font-medium text-right">G / Y / R</th>
+                        <th class="py-2 px-4 font-medium text-right">Bonus</th>
+                        <th class="py-2 px-4 font-medium text-right">Bonus/Base</th>
+                        <th class="py-2 px-4 font-medium text-right">Final Pay</th>
+                        <th class="py-2 pl-4 font-medium text-right">Tier</th>
+                    </tr>
+                </thead>
+                <tbody>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">מירוסלב - ראשל"צ ת"א מרכז</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">mirslvmam@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">9,745</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">13</span>
+                    <span class="tick-pill tick-yellow">12</span>
+                    <span class="tick-pill tick-red">4</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +410
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">4.2%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">10,155</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">דני ירושלים</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">orbenhr@walla.co.il</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">7,682</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">16</span>
+                    <span class="tick-pill tick-yellow">16</span>
+                    <span class="tick-pill tick-red">3</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +620
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">8.1%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">8,302</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">ניר שנייבאום</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">bullbazman@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">7,755</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">13</span>
+                    <span class="tick-pill tick-yellow">13</span>
+                    <span class="tick-pill tick-red">7</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +230
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">3.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">7,985</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">מיכאל פייגין באר שבע</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">mife1209@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">5,148</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">10</span>
+                    <span class="tick-pill tick-yellow">4</span>
+                    <span class="tick-pill tick-red">1</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +440
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">8.6%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">5,588</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">ג'רי שליידר שפלה</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">jerry.schleider@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">3,980</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">15</span>
+                    <span class="tick-pill tick-yellow">12</span>
+                    <span class="tick-pill tick-red">4</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +510
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">12.8%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">4,490</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">עמיאל לבל</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">amielebl@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">4,382</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">8</span>
+                    <span class="tick-pill tick-yellow">4</span>
+                    <span class="tick-pill tick-red">5</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +100
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">2.3%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">4,482</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">רועי הלוי</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">367roy@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">3,590</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">13</span>
+                    <span class="tick-pill tick-yellow">7</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +650
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">18.1%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">4,240</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">דוד דסטה פרדס חנה</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Davidd2468dd@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">3,330</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">4</span>
+                    <span class="tick-pill tick-yellow">3</span>
+                    <span class="tick-pill tick-red">1</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +140
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">4.2%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">3,470</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">ארז יפה</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">erez_yaffe@walla.co.il</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">2,885</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">11</span>
+                    <span class="tick-pill tick-yellow">9</span>
+                    <span class="tick-pill tick-red">5</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +250
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">8.7%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">3,135</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">סער כץ</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">saarkatz2@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">2,550</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">8</span>
+                    <span class="tick-pill tick-yellow">1</span>
+                    <span class="tick-pill tick-red">2</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +280
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">11.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">2,700</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">רננה גוטמן</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">gutmanrenana@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">910</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">1</span>
+                    <span class="tick-pill tick-yellow">1</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +50
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">5.5%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">960</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">שירה השרון</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Shira@shirarafalovitz.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">885</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">3</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">885</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-balanced">Balanced</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">דניאל ש</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">siudidani@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">585</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">5</span>
+                    <span class="tick-pill tick-yellow">2</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +250
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">42.7%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">835</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">ילנה נזרנקו</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Yelena888@hotmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">700</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">2</span>
+                    <span class="tick-pill tick-yellow">2</span>
+                    <span class="tick-pill tick-red">1</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-emerald-400" dir="ltr">
+                +40
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">5.7%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">740</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-high">High Performer</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">לימור שטיינר</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">limons875@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">520</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">520</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">גיל חדד</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Gilad77t@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">390</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">1</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">390</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-balanced">Balanced</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">דורון אוחיון</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Do9513135@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">יואב חדייר</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">Y0544358513@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">תמיר יוסף</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">tamork64@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">עמוס בוכניק</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">amosqv@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">דקל שרגא</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">dekelamarp@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr>
+        <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="py-3 pr-4"><span dir="rtl" class="font-medium text-slate-100">הדס כהן</span></td>
+            <td class="py-3 px-4 text-slate-500 text-xs">h1991c@gmail.com</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-300" dir="ltr">0</td>
+            <td class="py-3 px-4">
+                <div class="flex items-center gap-1.5 justify-end" dir="ltr">
+                    <span class="tick-pill tick-green">0</span>
+                    <span class="tick-pill tick-yellow">0</span>
+                    <span class="tick-pill tick-red">0</span>
+                </div>
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-500" dir="ltr">
+                0
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-400 text-xs" dir="ltr">0.0%</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-white" dir="ltr">0</td>
+            <td class="py-3 pl-4 text-right"><span class="tier-badge tier-none">No Usage Data</span></td>
+        </tr></tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+const chartData = {"categoryDonut": {"labels": ["Green", "Yellow", "Red"], "values": [119, 90, 33]}, "engagement": {"labels": ["High Performer", "Balanced", "At Risk", "No Usage Data"], "values": [13, 2, 0, 7]}, "bonusRatioByInstructor": {"labels": ["מירוסלב - ראשל\"צ ת\"א מרכז", "דני ירושלים", "ניר שנייבאום", "מיכאל פייגין באר שבע", "ג'רי שליידר שפלה", "עמיאל לבל", "רועי הלוי", "דוד דסטה פרדס חנה", "ארז יפה", "סער כץ", "רננה גוטמן", "שירה השרון", "דניאל ש", "ילנה נזרנקו", "לימור שטיינר", "גיל חדד", "דורון אוחיון", "יואב חדייר", "תמיר יוסף", "עמוס בוכניק", "דקל שרגא", "הדס כהן"], "values": [4.21, 8.07, 2.97, 8.55, 12.81, 2.28, 18.11, 4.2, 8.67, 10.98, 5.49, 0.0, 42.74, 5.71, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}};
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.color = '#8b93a7';
+
+new Chart(document.getElementById('categoryDonut'), {
+    type: 'doughnut',
+    data: {
+        labels: chartData.categoryDonut.labels,
+        datasets: [{
+            data: chartData.categoryDonut.values,
+            backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+            borderColor: '#0a0d13', borderWidth: 3
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('engagementChart'), {
+    type: 'bar',
+    data: {
+        labels: chartData.engagement.labels,
+        datasets: [{
+            data: chartData.engagement.values,
+            backgroundColor: ['#22c55e', '#5eead4', '#ef4444', '#8b93a7'],
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('ratioChart'), {
+    type: 'bar',
+    data: {
+        labels: chartData.bonusRatioByInstructor.labels,
+        datasets: [{
+            data: chartData.bonusRatioByInstructor.values,
+            backgroundColor: '#8b5cf6', borderRadius: 6
+        }]
+    },
+    options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+
+</body>
+</html>
